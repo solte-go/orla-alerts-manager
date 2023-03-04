@@ -1,0 +1,112 @@
+version: "3.7"
+services:
+  orla-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: orla-proxy
+    container_name: orla-proxy
+    image: orla-proxy:0.1.0
+    env_file:
+      - ./cmd/.env
+    depends_on:
+      orla-mongodb:
+        condition: service_started
+      orla-rabbitmq:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    restart: always
+    volumes:
+      - type: bind
+        source: /mnt/data
+        target: /data
+        read_only: true
+    networks:
+      - drs-network
+
+  #   orla-elasticsearch:
+  #     image: docker.elastic.co/elasticsearch/elasticsearch:7.16.3
+  #     container_name: orla-elasticsearch
+  #     environment:
+  #       - xpack.security.enabled=false
+  #       - discovery.type=single-node
+  #       - cluster.routing.allocation.disk.watermark.flood_stage=100mb
+  #       - cluster.routing.allocation.disk.watermark.high=1gb
+  #       - cluster.routing.allocation.disk.watermark.low=2gb
+  #       - ES_JAVA_OPTS=-Xms1G -Xmx1G
+  #     ports:
+  #       - "9200:9200"
+  #       - "9300:9300"
+  #     expose:
+  #       - 9200
+  #       - 9300
+  #     networks:
+  #       - orla-network
+  #     volumes:
+  #       - elasticsearch-volume:/usr/share/elasticsearch/data
+
+  orla-rabbitmq:
+    image: heidiks/rabbitmq-delayed-message-exchange:latest # TODO: pin version
+    container_name: orla-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    expose:
+      - 5672
+      - 15672
+    networks:
+      - orla-network
+    volumes:
+      - rabbitmq-volume:/bitnami
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    environment:
+      - RABBITMQ_DEFAULT_USER=codeuser
+      - RABBITMQ_DEFAULT_PASS=codepswd
+
+  orla-mongodb:
+    container_name: orla-mongodb
+    image: mongo:4.4.6 #TODO test more recent version
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    #    healthcheck:
+    ##      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/admin --quiet | grep 1
+    #      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/admin --quiet
+    #
+    ##      test:  echo 'db.runCommand({serverStatus:1}).ok' | mongo admin -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --quiet | grep 1
+    #      interval: 30s
+    #      timeout: 10s
+    #      retries: 5
+    #      start_period: 30s
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: dbtest
+      MONGO_INITDB_ROOT_PASSWORD: supra**
+    ports:
+      - "27017:27017"
+    expose:
+      - 27017
+    volumes:
+      - mongodb-volume:/data/db
+    networks:
+      - orla-network
+
+volumes:
+  elasticsearch-volume:
+    driver: local
+  mongodb-volume:
+    driver: local
+  rabbitmq-volume:
+    driver: local
+
+networks:
+  drs-network:
+    driver: bridge

@@ -1,0 +1,14 @@
+[tasks.bestwhois]
+    days = 1
+    tldFile = "../tlds.csv"
+    nrdDir = "/data/nrd-worker1"
+    ccDir =  "/data/webnx3/www/vhosts/bestwhois.org/cctld_domain_name_data/domain_names_new"
+    ccDropDir = "/data/webnx3/www/vhosts/bestwhois.org/cctld_domain_name_data/domain_names_dropped"
+    gDir = "/data/webnx3/home/domain_names_new"
+    gDropDir = "/data/webnx3/home/domain_names_dropped"
+    ngDir = "/data/webnx3/home/domain_names_ngtlds_new"
+    ngDropDir = "/data/webnx3/home/domain_names_ngtlds_dropped"
+    feDir = "/data/webnx2/fireeye_domains_list_download"
+    deltaDir =  "/data/webnx3/whois_record_delta_whois"
+
+

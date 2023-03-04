@@ -1,0 +1,62 @@
+[api]
+    sourcesMetricsPort = 8080
+
+[rabbit_queues.main_queue]
+    conn_name = "default_publisher"
+    uri = ""
+    exchange = "orla-exchange"
+    exchange_type = "direct"
+    queue = "orla-queue"
+    binding_key = "orla-default"
+    consumer_tag = "orla"
+    verbose = false
+    auto_ack = false
+    consumer = "orla-service"
+    durable = true
+    qos = 1001
+
+[rabbit_queues.delayed_queue]
+    conn_name = "delay_publisher" #for each new connection name should be set in main before start.
+    uri = ""
+    exchange = "orla-delayed"
+    exchange_type = "x-delayed-message"
+    queue = "delayed-queue"
+    binding_key = "orla-delayed"
+    consumer_tag = "orla-consumer"
+    verbose = false
+    auto_ack = false
+    consumer = "orla-service"
+    durable = true
+    qos = 1001
+    [rabbit_queues.delayed_queue.exchange_args]
+        arg_key = "x-delayed-type"
+        arg_value = "direct"
+        delay = "12h" #time.Duration for how long message will be delayed
+
+[worker]
+    bunch_size = 1000
+    max_active_request = 100
+    task_timeout = "10m"
+    ticker_interval = "1s"
+    connection_name = "Orla Worker"
+
+
+[logging]
+    loglevel = "debug"
+    remote_address = ""             #localhost if you using for local graylog
+    remote_protocol ="tcp"          #udp is supported
+    remote_port = 54119             #12201 if you using for local graylog
+
+[mongo]
+    database_url = ""
+    max_pool_size = 20
+    connect_timeout = "30s"
+    database_name = "development"
+    indexes_collection = "Shared"
+
+
+[scheduler]
+    tasks = [
+        ["test_task", "12:00","12h" ],
+    ]
+    jitter = "5s"

@@ -1,0 +1,100 @@
+version: "3.7"
+services:
+  rabbitmq:
+    image: heidiks/rabbitmq-delayed-message-exchange:latest
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    expose:
+      - 5672
+      - 15672
+    networks:
+      - dev-network
+    volumes:
+      - rabbitmq-volume:/bitnami
+    environment:
+      - RABBITMQ_DEFAULT_USER=codeuser
+      - RABBITMQ_DEFAULT_PASS=codepswd
+
+  prometheus:
+    image: "prom/prometheus"
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    expose:
+      - 9090
+    volumes:
+      - ./prometheus_cfg.yaml:/etc/prometheus/cfg.yaml
+    command:
+      - "--storage.tsdb.retention.time=30d"
+      - "--config.file=/etc/prometheus/cfg.yaml"
+    networks:
+      - dev-network
+
+  mongodb:
+    container_name: mongodb
+    image: mongo
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: dbtest
+      MONGO_INITDB_ROOT_PASSWORD: supra**
+    ports:
+      - "27017:27017"
+    expose:
+      - 27017
+    volumes:
+      - mongodb-volume:/data/db
+    networks:
+      - dev-network
+  # elasticsearch:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:7.16.3
+  #   container_name: elasticsearch
+  #   environment:
+  #     - xpack.security.enabled=false
+  #     - discovery.type=single-node
+  #     - cluster.routing.allocation.disk.watermark.flood_stage=100mb
+  #     - cluster.routing.allocation.disk.watermark.high=1gb
+  #     - cluster.routing.allocation.disk.watermark.low=2gb
+  #     - ES_JAVA_OPTS=-Xms1G -Xmx1G
+  #   ports:
+  #     - "9200:9200"
+  #     - "9300:9300"
+  #   expose:
+  #     - 9200
+  #     - 9300
+  #   networks:
+  #     - dev-network
+  #   volumes:
+  #     - elasticsearch-volume:/usr/share/elasticsearch/data
+
+  # kibana:
+  #   image: docker.elastic.co/kibana/kibana:7.16.3
+  #   container_name: kibana
+  #   environment:
+  #     - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+  #   ports:
+  #     - "5601:5601"
+  #   expose:
+  #     - 5601
+  #   depends_on:
+  #     - elasticsearch
+  #   networks:
+  #     - dev-network
+
+volumes:
+  elasticsearch-volume:
+    driver: local
+  mongodb-volume:
+    driver: local
+  rabbitmq-volume:
+    driver: local
+
+networks:
+  dev-network:
+    driver: bridge
