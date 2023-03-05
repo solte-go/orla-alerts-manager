@@ -1,0 +1,17 @@
+1. QueueConnector queue configuration and apply last changes
+2. API logging
+3. Worker to consume alerts from Rabbit and Process
+4. Elastic Search package
+5. Makefile
+6. Docker deployment
+7. API endpoints to push alerts
+8. Sources Scrapers (Zabbix for example)
+
+
+
+LONG TERM IDEAS
+Fronend
+1. React UI to represent alerts (Alerts Aknolegment and etc)
+
+Backend
+1. Add kafka
