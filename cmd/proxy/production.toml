@@ -1,5 +1,5 @@
 [api]
-    sourcesMetricsPort = 8080
+    apiPort = 8080
 
 [rabbit_queues.main_queue]
     conn_name = "default_publisher"

@@ -14,8 +14,8 @@ services:
     volumes:
       - rabbitmq-volume:/bitnami
     environment:
-      - RABBITMQ_DEFAULT_USER=codeuser
-      - RABBITMQ_DEFAULT_PASS=codepswd
+      - RABBITMQ_DEFAULT_USER=rabbitdev
+      - RABBITMQ_DEFAULT_PASS=supra**
 
   prometheus:
     image: "prom/prometheus"

@@ -2,6 +2,7 @@ package testtask
 
 import (
 	"context"
+	"fmt"
 	"rabbitmq/lab-soltegm.com/src/config"
 	"rabbitmq/lab-soltegm.com/src/model"
 	v1 "rabbitmq/lab-soltegm.com/src/queue/rabbitmq/v1"
@@ -30,7 +31,7 @@ func newTestTask(t time.Duration, db *db.DB, conf *config.Tasks) (scheduler.Runn
 	if err != nil {
 		return nil, err
 	}
-
+	fmt.Println("here", conf)
 	return &testTask{
 		rabbitmq: connection,
 		logger:   logger,

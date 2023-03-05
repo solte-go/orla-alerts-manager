@@ -1,0 +1,4 @@
+[tasks.example_task]
+    rabbitConnectionName = "orla-alerts-proxy"
+
+

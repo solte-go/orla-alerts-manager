@@ -16,8 +16,8 @@ import (
 type QueueRoutingKey string
 
 const (
-	Default QueueRoutingKey = "nrd-queue"
-	Delayed QueueRoutingKey = "nrd-delayed"
+	Default QueueRoutingKey = "orla-default"
+	Delayed QueueRoutingKey = "orla-delayed"
 )
 
 func (qrk QueueRoutingKey) String() string {

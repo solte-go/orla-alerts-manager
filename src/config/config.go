@@ -26,7 +26,7 @@ type Config struct {
 }
 
 type Tasks struct {
-	ExampleTask
+	ExampleTask `mapstructure:"example_task"`
 }
 
 type HTTPserver struct {
@@ -111,16 +111,18 @@ func loadDefaults(v *viper.Viper) {
 }
 
 func LoadConf(env string) (Config, error) {
+	var c Config
+
 	var confFileName string
 	if env == "prod" {
 		confFileName = "production"
-		err := readEnvironment(".env")
+		err := c.readEnvironment(".env")
 		if err != nil {
 			return Config{}, err
 		}
 	} else {
 		confFileName = "development"
-		err := readEnvironment("../.env")
+		err := c.readEnvironment("../.env")
 		if err != nil {
 			return Config{}, err
 		}
@@ -128,19 +130,16 @@ func LoadConf(env string) (Config, error) {
 
 	v := viper.New()
 	v.SetConfigName(confFileName)
-	v.AddConfigPath("../")
+	v.AddConfigPath("./")
 	if err := v.ReadInConfig(); err != nil {
 		return Config{}, err
 	}
 
-	matches, err := filepath.Glob("../sources/*.toml")
-	if err != nil {
-		return Config{}, err
-	}
+	v.AddConfigPath("../charts")
+	files := c.prepareConfingFiles()
 
-	for _, match := range matches {
-		file := strings.Split(match, ".")
-		v.SetConfigName(file[2])
+	for _, file := range files {
+		v.SetConfigName(file)
 		if err := v.MergeInConfig(); err != nil {
 			return Config{}, err
 		}
@@ -148,7 +147,6 @@ func LoadConf(env string) (Config, error) {
 
 	loadDefaults(v)
 
-	var c Config
 	if err := v.Unmarshal(&c); err != nil {
 		return Config{}, err
 	}
@@ -165,7 +163,7 @@ func (c *Config) envVariables(key string) string {
 }
 
 // readEnvironment reads the first existing env file from the list
-func readEnvironment(files ...string) error {
+func (c *Config) readEnvironment(files ...string) error {
 	for _, f := range files {
 		err := godotenv.Load(f)
 		if err == nil {
@@ -176,4 +174,21 @@ func readEnvironment(files ...string) error {
 		}
 	}
 	return nil
+}
+
+func (c *Config) prepareConfingFiles() []string {
+	var tasksConfigFiles []string
+
+	matches, err := filepath.Glob("../charts/*.toml")
+	if err != nil {
+		return nil
+	}
+
+	for _, m := range matches {
+		filePath := strings.Split(m, ".")
+		file := strings.Split(filePath[2], "\\")
+		tasksConfigFiles = append(tasksConfigFiles, file[2])
+	}
+
+	return tasksConfigFiles
 }

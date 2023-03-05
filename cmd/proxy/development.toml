@@ -1,8 +1,8 @@
-[api]
-    sourcesMetricsPort = 8080
+[http_server]
+    apiPort = 8080
 
 [rabbit_queues.main_queue]
-    conn_name = "default_publisher"
+    conn_name = "orla-alerts-proxy"
     uri = ""
     exchange = "orla-exchange"
     exchange_type = "direct"

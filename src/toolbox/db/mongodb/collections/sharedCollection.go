@@ -6,9 +6,9 @@ import (
 
 	"rabbitmq/lab-soltegm.com/src/model"
 	"rabbitmq/lab-soltegm.com/src/toolbox/db/contract"
-	"rabbitmq/lab-soltegm.com/vendor/go.mongodb.org/mongo-driver/bson"
 
 	"github.com/pkg/errors"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"

@@ -18,6 +18,8 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+
+	_ "rabbitmq/lab-soltegm.com/src/scheduler/tasks/testtask"
 )
 
 var (
@@ -44,6 +46,8 @@ func main() {
 		panic(fmt.Sprintf("Error load config: %s", err.Error()))
 	}
 
+	fmt.Println(conf)
+
 	logger, err := logging.NewLogger(conf.Logging)
 	if err != nil {
 		panic(fmt.Sprintf("Can't initialize logger: %s", err.Error()))
@@ -58,7 +62,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	conf.RabbitQueues.MainQueue.ConnName = "Sources Proxy Default"
+	// conf.RabbitQueues.MainQueue.ConnName = "Sources Proxy Default"
 
 	err = v1.InitiateConfiguration(
 		[]*config.RabbitMQ{
