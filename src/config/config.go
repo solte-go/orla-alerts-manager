@@ -23,6 +23,7 @@ type Config struct {
 	RabbitQueues  *RabbitQueues  `mapstructure:"rabbit_queues"`
 	Scheduler     *Scheduler     `mapstructure:"scheduler"`
 	Tasks         *Tasks         `mapstructure:"tasks"`
+	Worker        Worker         `mapstructure:"worker"`
 }
 
 type Tasks struct {
@@ -104,6 +105,13 @@ type Logging struct {
 	RemotePort     int    `mapstructure:"remote_port"`
 }
 
+type Worker struct {
+	BunchSize      int           `mapstructure:"bunch_size"`
+	TickerInterval time.Duration `mapstructure:"ticker_interval"`
+	TaskTimeout    time.Duration `mapstructure:"task_timeout"`
+	TaskConnDelay  time.Duration `mapstructure:"task_conn_delay"`
+}
+
 func loadDefaults(v *viper.Viper) {
 	for key, val := range DefaultConfig {
 		v.SetDefault(key, val)
@@ -130,7 +138,7 @@ func LoadConf(env string) (Config, error) {
 
 	v := viper.New()
 	v.SetConfigName(confFileName)
-	v.AddConfigPath("./")
+	v.AddConfigPath("../")
 	if err := v.ReadInConfig(); err != nil {
 		return Config{}, err
 	}

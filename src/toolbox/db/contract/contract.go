@@ -14,6 +14,6 @@ type SharedCollectionContract interface {
 }
 
 type TeardownDB interface {
-	DropDataBase(ctx context.Context) error
+	DropDatabase(ctx context.Context) error
 	ClearDatabase(ctx context.Context) error
 }

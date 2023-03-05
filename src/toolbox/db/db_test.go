@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"rabbitmq/lab-soltegm.com/src/logging"
 	"rabbitmq/lab-soltegm.com/src/model"
 	"rabbitmq/lab-soltegm.com/src/toolbox/db/contract"
@@ -29,12 +30,12 @@ func (suite *storeTests) Test_NewAlerts() {
 	alerts = append(alerts, &newAlert)
 
 	err := suite.db.SharedDB.NewAlert(timeout, alerts)
-	suite.Suite.Error(err)
+	suite.Suite.NoError(err)
 
 	results, err := suite.db.SharedDB.GetAllAlerts(timeout)
-	suite.Suite.Error(err)
+	suite.Suite.NoError(err)
 
-	suite.Suite.Equal(newAlert.HashID, results[0].HashID)
+	suite.Suite.Equal(fmt.Sprintf("%v", newAlert.Info.ID), fmt.Sprintf("%v", results[0].Info.ID))
 }
 
 func (suite *storeTests) SetupSuite() {

@@ -44,7 +44,9 @@ func (suite *queueTests) Test_QueueFunctional() {
 
 func (suite *queueTests) Test_ConsumerReconnection() {
 	ch := make(chan model.Alert)
-	err := suite.rabbit.StartConsumer(ch)
+	errCh := make(chan error)
+
+	err := suite.rabbit.StartConsumer(ch, errCh)
 	suite.Suite.NoError(err)
 
 	err = suite.rabbit.ReconnectConsumer()

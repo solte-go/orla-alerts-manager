@@ -42,6 +42,7 @@ type connection struct {
 type consumer struct {
 	workerPipeline chan model.Alert
 	delivery       *amqp.Delivery
+	errorChan      chan error
 }
 
 type publisher struct {
@@ -239,7 +240,7 @@ func (qc *QueueConnector) ReconnectConsumer() error {
 		time.Sleep(reqDelayJitter)
 	}
 
-	err := qc.StartConsumer(qc.Consumer.workerPipeline)
+	err := qc.StartConsumer(qc.Consumer.workerPipeline, qc.Consumer.errorChan)
 	if err != nil {
 		return err
 	}

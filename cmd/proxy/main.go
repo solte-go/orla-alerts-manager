@@ -31,22 +31,29 @@ func init() {
 	flag.Parse()
 }
 
-func waitQuitSignal() {
-	quit := make(chan os.Signal, 1)
-	defer close(quit)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+func waitQuitSignal(ctx context.Context) context.Context {
+	ctx, cancel := context.WithCancel(ctx)
 
-	<-quit
+	go func() {
+		quit := make(chan os.Signal, 1)
+		defer close(quit)
+		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+		<-quit
+		cancel()
+	}()
+
+	return ctx
 }
 
 func main() {
+
+	ctx := waitQuitSignal(context.Background())
 
 	conf, err := config.LoadConf(env)
 	if err != nil {
 		panic(fmt.Sprintf("Error load config: %s", err.Error()))
 	}
-
-	fmt.Println(conf)
 
 	logger, err := logging.NewLogger(conf.Logging)
 	if err != nil {
@@ -58,11 +65,6 @@ func main() {
 	defer logger.Sync() //nolint
 	undo := zap.ReplaceGlobals(logger)
 	defer undo()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// conf.RabbitQueues.MainQueue.ConnName = "Sources Proxy Default"
 
 	err = v1.InitiateConfiguration(
 		[]*config.RabbitMQ{
@@ -92,7 +94,14 @@ func main() {
 	proxyMetrics := proxymetrics.NewSourcesProxy()
 
 	sch := scheduler.New()
-	go sch.Run(ctx, 2*time.Second, conf.Scheduler.Jitter)
+
+	server := api.NewServer(logger)
+	go server.Run(
+		ctx,
+		conf.Server.Port,
+		proxyMetrics,
+		&schedulerHandler.SchedulerHandler{Scheduler: &sch},
+	)
 
 	for _, taskDesc := range conf.Scheduler.Tasks {
 		logger.Info(taskDesc[0])
@@ -126,13 +135,5 @@ func main() {
 		sch.AddScheduled(taskName, startTime, duration, task)
 	}
 
-	server := api.NewServer(logger)
-	go server.Run(
-		ctx,
-		conf.Server.Port,
-		proxyMetrics,
-		&schedulerHandler.SchedulerHandler{Scheduler: &sch},
-	)
-
-	waitQuitSignal()
+	sch.Run(ctx, 2*time.Second, conf.Scheduler.Jitter)
 }

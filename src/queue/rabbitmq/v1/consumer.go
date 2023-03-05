@@ -1,20 +1,61 @@
 package v1
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"rabbitmq/lab-soltegm.com/src/model"
+	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
 )
 
-// GetDeliveryChannel Return delivery channel to be able ACK delivery of message outside of RabbitMQ package
-func (qc *QueueConnector) GetDeliveryChannel() *amqp.Delivery {
-	return qc.Consumer.delivery
+// AckProcessedMessages will send acknowledged for processed messages to server
+func (qc *QueueConnector) AckProcessedMessages() error {
+	err := qc.Consumer.delivery.Ack(true)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (qc *QueueConnector) StartConsumer(workerPipeline chan model.Alert) error {
+// RequeueNotAcknowledgedMessages Will try to re-queue all not acknowledged messages. Will return err in delivery channel is nil
+func (qc *QueueConnector) RequeueNotAcknowledgedMessages() error {
+	deadLine, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var (
+		delayJitter   = (rand.Float64() - 0.5) / 5
+		delayDuration = 2 * time.Second
+		err           error
+	)
+
+	for {
+		reqDelayJitter := time.Duration((1 + delayJitter) * float64(delayDuration))
+		if qc.Consumer.delivery != nil {
+			err = qc.Consumer.delivery.Nack(true, true)
+			if err != nil {
+				return err
+			} else {
+				break
+			}
+		}
+
+		qc.logger.Info(ErrQueueIsNotReady.Error())
+
+		select {
+		case <-time.After(reqDelayJitter):
+		case <-deadLine.Done():
+			return ErrQueueIsNotConfigured
+		}
+	}
+	return nil
+}
+
+func (qc *QueueConnector) StartConsumer(workerPipeline chan model.Alert, errorChan chan error) error {
 	if qc.CheckConnection() {
 		err := qc.connect()
 		if err != nil {
@@ -23,6 +64,7 @@ func (qc *QueueConnector) StartConsumer(workerPipeline chan model.Alert) error {
 	}
 
 	qc.Consumer.workerPipeline = workerPipeline
+	qc.Consumer.errorChan = errorChan
 
 	if err := qc.Connection.channel.Qos(
 		qc.conf.Qos, // prefetch count
@@ -58,6 +100,8 @@ func (qc *QueueConnector) HandleConsumedDeliveries(
 			deliveries, err := qc.ConsumerMessages()
 			if err != nil {
 				qc.logger.Error("can't restart Consumer()", zap.Error(err))
+				qc.Consumer.errorChan <- err
+				return
 			}
 			delivery = deliveries[queue]
 		}

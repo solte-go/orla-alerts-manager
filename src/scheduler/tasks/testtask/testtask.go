@@ -2,7 +2,6 @@ package testtask
 
 import (
 	"context"
-	"fmt"
 	"rabbitmq/lab-soltegm.com/src/config"
 	"rabbitmq/lab-soltegm.com/src/model"
 	v1 "rabbitmq/lab-soltegm.com/src/queue/rabbitmq/v1"
@@ -31,7 +30,7 @@ func newTestTask(t time.Duration, db *db.DB, conf *config.Tasks) (scheduler.Runn
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("here", conf)
+
 	return &testTask{
 		rabbitmq: connection,
 		logger:   logger,
@@ -41,11 +40,10 @@ func newTestTask(t time.Duration, db *db.DB, conf *config.Tasks) (scheduler.Runn
 func (ts *testTask) Run() error {
 	ts.logger.Debug("Starting task: test_task")
 
-	entry := model.GetTestAlert()
-
 	time.Sleep(5 * time.Second)
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 1200; i++ {
+		entry := model.GetTestAlert()
 		err := ts.rabbitmq.PrepareAndPublishMessage(context.TODO(), v1.Default, entry)
 		if err != nil {
 			ts.logger.Error("error", zap.Error(err))
