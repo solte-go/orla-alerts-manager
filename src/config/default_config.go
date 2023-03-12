@@ -42,7 +42,7 @@ func InitConfig() Config {
 
 	mainQueue := &RabbitMQ{
 		ConnName:     "Tasks_Test_Connection",
-		AmqpURI:      "amqp://soltelab:labpass@localhost:5672/",
+		AmqpURI:      "amqp://rabbitdev:supra**@localhost:5672/",
 		Queue:        "defoult-queue",
 		Consumer:     "defoult-consumer",
 		Exchange:     "main-exchange",
@@ -58,7 +58,7 @@ func InitConfig() Config {
 
 	delayedQueue := &RabbitMQ{
 		ConnName:     "Tasks_Test_Delayed_Connection",
-		AmqpURI:      "amqp://soltelab:labpass@localhost:5672/",
+		AmqpURI:      "amqp://rabbitdev:supra**@localhost:5672/",
 		Queue:        "delayed-queue",
 		Consumer:     "defoult-consumer",
 		Exchange:     "delayed-exchange",

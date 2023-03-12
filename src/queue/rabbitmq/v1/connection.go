@@ -13,36 +13,26 @@ import (
 	"go.uber.org/zap"
 )
 
-type QueueRoutingKey string
-
-const (
-	Default QueueRoutingKey = "orla-default"
-	Delayed QueueRoutingKey = "orla-delayed"
-)
-
-func (qrk QueueRoutingKey) String() string {
-	return string(qrk)
-}
-
 type Header struct {
 	HeaderType string
 	Delay      int64
 }
 
 type connection struct {
-	name     string
-	client   *amqp.Connection
-	channel  *amqp.Channel
-	exchange string
-	queues   []string
-	err      chan error
-	reliable bool
+	name      string
+	client    *amqp.Connection
+	channel   *amqp.Channel
+	connChan  chan *amqp.Error
+	errorChan chan error
+	exchange  string
+	queues    []string
+	err       chan error
+	reliable  bool
 }
 
 type consumer struct {
 	workerPipeline chan model.Alert
 	delivery       *amqp.Delivery
-	errorChan      chan error
 }
 
 type publisher struct {
@@ -164,7 +154,9 @@ func (qc *QueueConnector) connect() error {
 	}
 
 	go func() {
-		<-qc.Connection.client.NotifyClose(make(chan *amqp.Error)) //Listen to NotifyClose
+		qc.Connection.connChan = qc.Connection.client.NotifyClose(make(chan *amqp.Error)) //Listen to NotifyClose
+		<-qc.Connection.connChan
+		qc.logger.Info(fmt.Sprintf("closing connection %s", qc.Connection.name))
 		qc.Connection.err <- errors.New("connection closed")
 	}()
 
@@ -229,6 +221,11 @@ func (qc *QueueConnector) ReconnectConsumer() error {
 		delayDuration = 3 * time.Second
 	)
 
+	qc.CloseConnection()
+
+	deadLine, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
 	for {
 		reqDelayJitter := time.Duration((1 + delayJitter) * float64(delayDuration))
 		err := qc.connect()
@@ -236,11 +233,18 @@ func (qc *QueueConnector) ReconnectConsumer() error {
 			break
 		}
 
-		qc.logger.Error("re-initiate Consumer connection error", zap.Error(err))
+		select {
+		case <-time.After(reqDelayJitter):
+		case <-deadLine.Done():
+			qc.Connection.errorChan <- errFailedToStartConsumer
+			return errFailedToStartConsumer
+		}
+
+		qc.logger.Error("an error when trying to recover Consumer connection", zap.Error(err))
 		time.Sleep(reqDelayJitter)
 	}
 
-	err := qc.StartConsumer(qc.Consumer.workerPipeline, qc.Consumer.errorChan)
+	err := qc.StartConsumer(qc.Consumer.workerPipeline, qc.Connection.errorChan)
 	if err != nil {
 		return err
 	}
@@ -256,6 +260,8 @@ func (qc *QueueConnector) ReconnectPublisher() error {
 		err           error
 	)
 
+	qc.CloseConnection()
+
 	deadLine, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -270,6 +276,7 @@ func (qc *QueueConnector) ReconnectPublisher() error {
 		select {
 		case <-time.After(reqDelayJitter):
 		case <-deadLine.Done():
+			qc.Connection.errorChan <- errFailedToStartPublisher
 			return errFailedToStartPublisher
 		}
 	}
@@ -282,7 +289,7 @@ func (qc *QueueConnector) ReconnectPublisher() error {
 		qc.Publisher.done <- struct{}{}
 	}
 
-	err = qc.StartPublisher()
+	err = qc.StartPublisher(qc.Connection.errorChan)
 	if err != nil {
 		return err
 	}
@@ -309,12 +316,31 @@ func (qc *QueueConnector) Shutdown() error {
 	return nil
 }
 
+func (qc *QueueConnector) CloseConnection() {
+
+	err := qc.Connection.channel.Close()
+	if err != nil {
+		fmt.Println("channel", err)
+		return
+	}
+
+	qc.Connection.client.Close()
+}
+
 // ClearQueue this function will clear all messages from provided queue
 // mainly used for test purposes
 func (qc *QueueConnector) ClearQueue() error {
-	_, err := qc.Connection.channel.QueuePurge(Default.String(), false)
+	_, err := qc.Connection.channel.QueuePurge(qc.DelayRouting(), false)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (qc *QueueConnector) DefaultRouting() string {
+	return qc.conf.BindingKey
+}
+
+func (qc *QueueConnector) DelayRouting() string {
+	return qc.conf.BindingKey
 }

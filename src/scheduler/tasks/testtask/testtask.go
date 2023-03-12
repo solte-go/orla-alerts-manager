@@ -44,7 +44,7 @@ func (ts *testTask) Run() error {
 
 	for i := 0; i < 1200; i++ {
 		entry := model.GetTestAlert()
-		err := ts.rabbitmq.PrepareAndPublishMessage(context.TODO(), v1.Default, entry)
+		err := ts.rabbitmq.PrepareAndPublishMessage(context.TODO(), ts.rabbitmq.DefaultRouting(), entry)
 		if err != nil {
 			ts.logger.Error("error", zap.Error(err))
 		}

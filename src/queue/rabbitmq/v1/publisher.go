@@ -10,7 +10,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func (qc *QueueConnector) StartPublisher() error {
+func (qc *QueueConnector) StartPublisher(errCh chan error) error {
 	if qc.CheckConnection() {
 		err := qc.connect()
 		if err != nil {
@@ -18,6 +18,7 @@ func (qc *QueueConnector) StartPublisher() error {
 		}
 	}
 
+	qc.Connection.errorChan = errCh
 	qc.Publisher.confirms = qc.Connection.channel.NotifyPublish(make(chan amqp.Confirmation, 1))
 	qc.Publisher.publishes = make(chan uint64, 8)
 	qc.Publisher.done = make(chan struct{})
@@ -59,7 +60,7 @@ func (qc *QueueConnector) confirmHandler(done chan struct{}, publishes chan uint
 	}
 }
 
-func (qc *QueueConnector) PrepareAndPublishMessage(ctx context.Context, routingKey QueueRoutingKey, entry model.Alert) error {
+func (qc *QueueConnector) PrepareAndPublishMessage(ctx context.Context, routingKey string, entry model.Alert) error {
 	var header amqp.Table
 
 	messageBody, err := json.Marshal(entry)
@@ -75,7 +76,7 @@ func (qc *QueueConnector) PrepareAndPublishMessage(ctx context.Context, routingK
 		Body:         messageBody,
 	}
 
-	if routingKey == Delayed {
+	if routingKey == qc.DelayRouting() {
 		header = amqp.Table{"x-delay": qc.conf.ExchangeArgs.Delay.Milliseconds()}
 		message.Headers = header
 	}
@@ -89,7 +90,7 @@ func (qc *QueueConnector) PrepareAndPublishMessage(ctx context.Context, routingK
 }
 
 // PublishMessage publishes a request to the amqp queue
-func (qc *QueueConnector) PublishMessage(ctx context.Context, routingKey QueueRoutingKey, message amqp.Publishing) error {
+func (qc *QueueConnector) PublishMessage(ctx context.Context, routingKey string, message amqp.Publishing) error {
 	seqNo := qc.Connection.channel.GetNextPublishSeqNo()
 
 	select { //non-blocking channel - if there is no error will go to default where we do nothing
@@ -105,7 +106,7 @@ func (qc *QueueConnector) PublishMessage(ctx context.Context, routingKey QueueRo
 	if err := qc.Connection.channel.PublishWithContext(
 		ctx,
 		qc.Connection.exchange,
-		routingKey.String(),
+		routingKey,
 		false,
 		false,
 		message,

@@ -76,14 +76,9 @@ func main() {
 		logger.Fatal("Can't initialize RabbitMQ", zap.Error(err))
 	}
 
-	r, err := v1.GetConnection(conf.RabbitQueues.MainQueue.ConnName)
+	publisher, err := v1.GetConnection(conf.RabbitQueues.MainQueue.ConnName)
 	if err != nil {
 		logger.Fatal("Can't get RabbitMQ connection", zap.Error(err))
-	}
-
-	err = r.StartPublisher()
-	if err != nil {
-		logger.Fatal("Can't start RabbitMQ Publisher", zap.Error(err))
 	}
 
 	newStore, err := db.InitDatabase(ctx, conf, logger)
@@ -135,5 +130,5 @@ func main() {
 		sch.AddScheduled(taskName, startTime, duration, task)
 	}
 
-	sch.Run(ctx, 2*time.Second, conf.Scheduler.Jitter)
+    sch.Run(ctx, 2*time.Second, publisher)
 }

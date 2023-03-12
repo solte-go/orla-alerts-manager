@@ -64,7 +64,7 @@ func (qc *QueueConnector) StartConsumer(workerPipeline chan model.Alert, errorCh
 	}
 
 	qc.Consumer.workerPipeline = workerPipeline
-	qc.Consumer.errorChan = errorChan
+	qc.Connection.errorChan = errorChan
 
 	if err := qc.Connection.channel.Qos(
 		qc.conf.Qos, // prefetch count
@@ -100,7 +100,7 @@ func (qc *QueueConnector) HandleConsumedDeliveries(
 			deliveries, err := qc.ConsumerMessages()
 			if err != nil {
 				qc.logger.Error("can't restart Consumer()", zap.Error(err))
-				qc.Consumer.errorChan <- err
+				qc.Connection.errorChan <- err
 				return
 			}
 			delivery = deliveries[queue]

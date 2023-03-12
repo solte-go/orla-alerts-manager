@@ -8,21 +8,25 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	v1 "rabbitmq/lab-soltegm.com/src/queue/rabbitmq/v1"
 )
 
 type Scheduler struct {
-	syncContainer
+	jobSync syncContainer
+	logger  *zap.Logger
 }
 
 func New() Scheduler {
 	return Scheduler{
-		newSyncContainer(),
+		jobSync: newSyncContainer(),
+		logger:  zap.L().Named("scheduler"),
 	}
 }
 
 func (s *Scheduler) AddScheduled(name string, firstRun time.Time, duration time.Duration, task Runnable) error {
 	var err error
-	s.access(func(tasks map[string]*taskWrapper) {
+	s.jobSync.access(func(tasks map[string]*taskWrapper) {
 		if _, exists := tasks[name]; exists {
 			err = fmt.Errorf("task %q already registered", name)
 			return
@@ -47,14 +51,18 @@ func (s *Scheduler) AddScheduled(name string, firstRun time.Time, duration time.
 	return err
 }
 
-func (s *Scheduler) Run(ctx context.Context, resolution time.Duration, maxJitter time.Duration) {
-	//TODO should we run rabbitMQ here?
-	//go s.syncContainer.run(ctx)
+func (s *Scheduler) Run(ctx context.Context, resolution time.Duration, r *v1.QueueConnector) {
 
 	ticker := time.NewTicker(resolution)
 
+	errChan := make(chan error)
+	err := r.StartPublisher(errChan)
+	if err != nil {
+		s.logger.Fatal("Can't start RabbitMQ Publisher", zap.Error(err))
+	}
+
 	for {
-		s.access(func(tasks map[string]*taskWrapper) {
+		s.jobSync.access(func(tasks map[string]*taskWrapper) {
 			for n, t := range tasks {
 				if t.Ready() {
 					t.ScheduleNextRun()
@@ -79,7 +87,7 @@ func (s *Scheduler) runTask(taskName string, t *taskWrapper) {
 	defer func() {
 		if r := recover(); r != nil {
 			zap.L().Error("Recovered", zap.Any("message", r), zap.ByteString("stacktrace", debug.Stack()))
-			s.access(func(tasks map[string]*taskWrapper) {
+			s.jobSync.access(func(tasks map[string]*taskWrapper) {
 				task := tasks[taskName]
 				task.lastError = fmt.Errorf("recovered: %v", r)
 				task.status = statusNotRunning
@@ -95,7 +103,7 @@ func (s *Scheduler) runTask(taskName string, t *taskWrapper) {
 	}
 	zap.L().Info("", zap.String("Finished task:", taskName))
 
-	s.access(func(tasks map[string]*taskWrapper) {
+	s.jobSync.access(func(tasks map[string]*taskWrapper) {
 		task := tasks[taskName]
 		task.lastError = err
 		task.status = statusNotRunning
@@ -105,7 +113,7 @@ func (s *Scheduler) runTask(taskName string, t *taskWrapper) {
 func (s *Scheduler) TasksListInfo() map[string]TaskInfo {
 	info := map[string]TaskInfo{}
 
-	s.access(func(tasks map[string]*taskWrapper) {
+	s.jobSync.access(func(tasks map[string]*taskWrapper) {
 		for name, task := range tasks {
 			info[name] = task.TaskInfo()
 		}
@@ -120,7 +128,7 @@ func (s *Scheduler) TaskInfo(name string) (TaskInfo, error) {
 		info TaskInfo
 	)
 
-	s.access(func(tasks map[string]*taskWrapper) {
+	s.jobSync.access(func(tasks map[string]*taskWrapper) {
 		task, exists := tasks[name]
 		if !exists {
 			err = fmt.Errorf("task '%s' not registered", name)
@@ -135,7 +143,7 @@ func (s *Scheduler) TaskInfo(name string) (TaskInfo, error) {
 func (s *Scheduler) RunOnNextTick(name string) error {
 	var err error
 
-	s.access(func(tasks map[string]*taskWrapper) {
+	s.jobSync.access(func(tasks map[string]*taskWrapper) {
 		task, exists := tasks[name]
 		if !exists {
 			err = fmt.Errorf("task '%s' not registered", name)
@@ -156,7 +164,7 @@ func (s *Scheduler) RunOnNextTick(name string) error {
 func (s *Scheduler) Cancel(name string) error {
 	var err error
 
-	s.access(func(tasks map[string]*taskWrapper) {
+	s.jobSync.access(func(tasks map[string]*taskWrapper) {
 		task, exists := tasks[name]
 		if !exists {
 			err = fmt.Errorf("task '%s' not registered", name)
@@ -173,7 +181,7 @@ func (s *Scheduler) Cancel(name string) error {
 func (s *Scheduler) ScheduleTask(name string, timeToRun time.Time, interval time.Duration) error {
 	var err error
 
-	s.access(func(tasks map[string]*taskWrapper) {
+	s.jobSync.access(func(tasks map[string]*taskWrapper) {
 		task, exists := tasks[name]
 		if !exists {
 			err = fmt.Errorf("task '%s' not registered", name)

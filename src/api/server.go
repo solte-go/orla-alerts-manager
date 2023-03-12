@@ -9,6 +9,12 @@ import (
 	"net/http"
 )
 
+type ctxKey int8
+
+const (
+	ctxKeyRequestID ctxKey = iota
+)
+
 type Handler interface {
 	Register(s *Server) (string, chi.Router)
 }
@@ -28,12 +34,12 @@ func (s *Server) Run(ctx context.Context, port int, handlers ...Handler) {
 		path, router := h.Register(s)
 		s.router.Mount(path, router)
 	}
+
 	//TODO graceful shutdown
-	//go func() {
-	//	<-ctx.Done()
-	//	//http.
-	//	//_ = server.Shutdown()
-	//}()
+	go func() {
+		<-ctx.Done()
+		s.logger.Warn("server shutdown")
+	}()
 
 	s.logger.Debug(fmt.Sprintf("Server running on port %d", port))
 	err := http.ListenAndServe(fmt.Sprintf(":%d", port), s.router)

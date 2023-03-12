@@ -17,6 +17,9 @@ type ProxyWorker struct {
 
 func (sp *ProxyWorker) Register(s *api.Server) (string, chi.Router) {
 	routes := chi.NewRouter()
+	routes.Use(s.SetRequestID)
+	routes.Use(s.LogMetricsRequest)
+
 	routes.Handle("/", promhttp.Handler())
 	return "/metrics", routes
 }

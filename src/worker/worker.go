@@ -2,7 +2,6 @@ package worker
 
 import (
 	"context"
-	"errors"
 
 	"time"
 
@@ -86,7 +85,7 @@ func (w *Worker) Run(ctx context.Context) error {
 	}
 }
 
-func (w *Worker) runJobInstance() error {
+func (w *Worker) runJobInstance() {
 	w.logger.Debug("Job in Progress")
 	w.job.running()
 	ctxWithTimeout, cancel := context.WithDeadline(context.Background(), time.Now().Add(w.job.timeout))
@@ -100,7 +99,8 @@ func (w *Worker) runJobInstance() error {
 			//TODO add metrics
 		case <-ctxWithTimeout.Done():
 			w.job.returnedWithError()
-			return errors.New("the task has reached the time limit, canceling")
+			w.logger.Error("the task has reached the time limit, canceling")
+			return
 		}
 
 		w.job.addToBunch(data)
@@ -112,7 +112,7 @@ func (w *Worker) runJobInstance() error {
 			if err := w.databaseWriteAlerts(ctxWithTimeout); err != nil {
 				w.job.returnedWithError()
 				w.logger.Error("Error", zap.Error(err))
-				return err
+				return
 			}
 
 			err := w.consumer.AckProcessedMessages()
@@ -122,7 +122,7 @@ func (w *Worker) runJobInstance() error {
 				if err != nil {
 					w.logger.Error("Reconnection failed", zap.Error(err))
 					w.job.returnedWithError()
-					return err
+					return
 				}
 			}
 
@@ -133,5 +133,5 @@ func (w *Worker) runJobInstance() error {
 	}
 	w.job.completedSuccessfully()
 	w.logger.Debug("Job Completed")
-	return nil
+	return
 }
