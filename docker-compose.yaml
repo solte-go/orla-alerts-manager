@@ -66,8 +66,8 @@ services:
       retries: 5
       start_period: 30s
     environment:
-      - RABBITMQ_DEFAULT_USER=rabbitdev
-      - RABBITMQ_DEFAULT_PASS=supra**
+      - RABBITMQ_DEFAULT_USER=
+      - RABBITMQ_DEFAULT_PASS=
 
   orla-mongodb:
     container_name: orla-mongodb
@@ -80,15 +80,13 @@ services:
         window: 120s
     healthcheck:
         test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/admin --quiet | grep 1
-        #test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/admin --quiet
-        #test:  echo 'db.runCommand({serverStatus:1}).ok' | mongo admin -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --quiet | grep 1
         interval: 30s
         timeout: 10s
         retries: 5
         start_period: 30s
     environment:
-      MONGO_INITDB_ROOT_USERNAME: dbtest
-      MONGO_INITDB_ROOT_PASSWORD: supra**
+      MONGO_INITDB_ROOT_USERNAME:
+      MONGO_INITDB_ROOT_PASSWORD:
     ports:
       - "27017:27017"
     expose:
