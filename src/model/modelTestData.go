@@ -6,8 +6,9 @@ import (
 )
 
 func GetTestAlert() Alert {
-	rand.Seed(time.Now().UnixNano())
+	//rand.Seed(time.Now().UnixNano())
 
+	rand.NewSource(time.Now().UnixNano())
 	idMin := int64(100000000000)
 	idMax := int64(999999999999)
 
@@ -22,8 +23,8 @@ func GetTestAlert() Alert {
 		},
 		Revision: Revision{
 			Version:   "1.2",
-			CreatedAt: int64(time.Now().AddDate(-1, 0, -12).Unix()),
-			UpdateAt:  int64(time.Now().AddDate(0, -4, -5).Unix()),
+			CreatedAt: time.Now().AddDate(-1, 0, -12).Unix(),
+			UpdateAt:  time.Now().AddDate(0, -4, -5).Unix(),
 		},
 		Event: Event{
 			Severity:   "Critical",

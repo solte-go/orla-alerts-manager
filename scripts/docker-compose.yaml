@@ -1,8 +1,8 @@
 version: "3.7"
 services:
   rabbitmq:
-    image: heidiks/rabbitmq-delayed-message-exchange:latest
-    container_name: rabbitmq
+    image: solte/rabbitmq:3.11
+    container_name: orla-rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -12,7 +12,13 @@ services:
     networks:
       - dev-network
     volumes:
-      - rabbitmq-volume:/bitnami
+      - rabbitmq-volume:/var/lib/rabbitmq/
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     environment:
       - RABBITMQ_DEFAULT_USER=rabbitdev
       - RABBITMQ_DEFAULT_PASS=supra**

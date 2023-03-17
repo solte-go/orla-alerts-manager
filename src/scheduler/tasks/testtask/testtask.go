@@ -18,22 +18,27 @@ func init() {
 	_ = scheduler.Add(taskName, newTestTask)
 }
 
+type Publisher interface {
+	PrepareAndPublishMessage(ctx context.Context, routingKey string, entry model.Alert) error
+	DefaultRouting() string
+}
+
 type testTask struct {
-	logger   *zap.Logger
-	rabbitmq *v1.QueueConnector
+	logger    *zap.Logger
+	publisher Publisher
 }
 
 func newTestTask(t time.Duration, db *db.DB, conf *config.Tasks) (scheduler.Runnable, error) {
 	logger := zap.L().Named(taskName)
 
-	connection, err := v1.GetConnection(conf.ExampleTask.RabbitConnectionName)
+	rbInstance, err := v1.GetConnection(conf.ExampleTask.RabbitConnectionName)
 	if err != nil {
 		return nil, err
 	}
 
 	return &testTask{
-		rabbitmq: connection,
-		logger:   logger,
+		publisher: rbInstance,
+		logger:    logger,
 	}, nil
 }
 
@@ -44,7 +49,7 @@ func (ts *testTask) Run() error {
 
 	for i := 0; i < 1200; i++ {
 		entry := model.GetTestAlert()
-		err := ts.rabbitmq.PrepareAndPublishMessage(context.TODO(), ts.rabbitmq.DefaultRouting(), entry)
+		err := ts.publisher.PrepareAndPublishMessage(context.TODO(), ts.publisher.DefaultRouting(), entry)
 		if err != nil {
 			ts.logger.Error("error", zap.Error(err))
 		}

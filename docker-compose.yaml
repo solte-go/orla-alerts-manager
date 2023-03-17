@@ -23,7 +23,7 @@ services:
         target: /data
         read_only: true
     networks:
-      - drs-network
+      - orla-network
 
   #   orla-elasticsearch:
   #     image: docker.elastic.co/elasticsearch/elasticsearch:7.16.3
@@ -47,7 +47,7 @@ services:
   #       - elasticsearch-volume:/usr/share/elasticsearch/data
 
   orla-rabbitmq:
-    image: heidiks/rabbitmq-delayed-message-exchange:latest # TODO: pin version
+    image: solte/rabbitmq:3.11
     container_name: orla-rabbitmq
     ports:
       - "5672:5672"
@@ -58,7 +58,7 @@ services:
     networks:
       - orla-network
     volumes:
-      - rabbitmq-volume:/bitnami
+      - rabbitmq-volume:/var/lib/rabbitmq/
     healthcheck:
       test: rabbitmq-diagnostics -q ping
       interval: 30s
@@ -66,27 +66,26 @@ services:
       retries: 5
       start_period: 30s
     environment:
-      - RABBITMQ_DEFAULT_USER=codeuser
-      - RABBITMQ_DEFAULT_PASS=codepswd
+      - RABBITMQ_DEFAULT_USER=rabbitdev
+      - RABBITMQ_DEFAULT_PASS=supra**
 
   orla-mongodb:
     container_name: orla-mongodb
-    image: mongo:4.4.6 #TODO test more recent version
+    image: mongo
     deploy:
       restart_policy:
         condition: on-failure
         delay: 5s
         max_attempts: 3
         window: 120s
-    #    healthcheck:
-    ##      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/admin --quiet | grep 1
-    #      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/admin --quiet
-    #
-    ##      test:  echo 'db.runCommand({serverStatus:1}).ok' | mongo admin -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --quiet | grep 1
-    #      interval: 30s
-    #      timeout: 10s
-    #      retries: 5
-    #      start_period: 30s
+    healthcheck:
+        test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/admin --quiet | grep 1
+        #test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/admin --quiet
+        #test:  echo 'db.runCommand({serverStatus:1}).ok' | mongo admin -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --quiet | grep 1
+        interval: 30s
+        timeout: 10s
+        retries: 5
+        start_period: 30s
     environment:
       MONGO_INITDB_ROOT_USERNAME: dbtest
       MONGO_INITDB_ROOT_PASSWORD: supra**
@@ -108,5 +107,5 @@ volumes:
     driver: local
 
 networks:
-  drs-network:
+  orla-network:
     driver: bridge

@@ -72,14 +72,11 @@ type OraAPI struct {
 }
 
 type MongoDB struct {
-	DatabaseURL       string        `mapstructure:"database_url"`
-	MaxPoolSize       int           `mapstructure:"max_pool_size"`
-	ConnectTimeout    time.Duration `mapstructure:"connect_timeout"`
-	DatabaseName      string        `mapstructure:"database_name"`
-	IndicesCollection string        `mapstructure:"indexes_collection"`
-
-	BestWhoisCollection   string `mapstructure:"bestwhois_collection"`
-	CommonCrawlCollection string `mapstructure:"commoncrawl_collection"`
+	DatabaseURL    string        `mapstructure:"database_url"`
+	MaxPoolSize    int           `mapstructure:"max_pool_size"`
+	ConnectTimeout time.Duration `mapstructure:"connect_timeout"`
+	DatabaseName   string        `mapstructure:"database_name"`
+	Collection     string        `mapstructure:"collection"`
 }
 
 type ElasticSearch struct {
