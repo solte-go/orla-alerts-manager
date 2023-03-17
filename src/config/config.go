@@ -23,6 +23,7 @@ type Config struct {
 	RabbitQueues  *RabbitQueues  `mapstructure:"rabbit_queues"`
 	Scheduler     *Scheduler     `mapstructure:"scheduler"`
 	Tasks         *Tasks         `mapstructure:"tasks"`
+	Worker        Worker         `mapstructure:"worker"`
 }
 
 type Tasks struct {
@@ -71,14 +72,11 @@ type OraAPI struct {
 }
 
 type MongoDB struct {
-	DatabaseURL       string        `mapstructure:"database_url"`
-	MaxPoolSize       int           `mapstructure:"max_pool_size"`
-	ConnectTimeout    time.Duration `mapstructure:"connect_timeout"`
-	DatabaseName      string        `mapstructure:"database_name"`
-	IndicesCollection string        `mapstructure:"indexes_collection"`
-
-	BestWhoisCollection   string `mapstructure:"bestwhois_collection"`
-	CommonCrawlCollection string `mapstructure:"commoncrawl_collection"`
+	DatabaseURL    string        `mapstructure:"database_url"`
+	MaxPoolSize    int           `mapstructure:"max_pool_size"`
+	ConnectTimeout time.Duration `mapstructure:"connect_timeout"`
+	DatabaseName   string        `mapstructure:"database_name"`
+	Collection     string        `mapstructure:"collection"`
 }
 
 type ElasticSearch struct {
@@ -102,6 +100,13 @@ type Logging struct {
 	RemoteAddr     string `mapstructure:"remote_address"`
 	RemoteProtocol string `mapstructure:"remote_protocol"`
 	RemotePort     int    `mapstructure:"remote_port"`
+}
+
+type Worker struct {
+	BunchSize      int           `mapstructure:"bunch_size"`
+	TickerInterval time.Duration `mapstructure:"ticker_interval"`
+	TaskTimeout    time.Duration `mapstructure:"task_timeout"`
+	TaskConnDelay  time.Duration `mapstructure:"task_conn_delay"`
 }
 
 func loadDefaults(v *viper.Viper) {
@@ -130,7 +135,7 @@ func LoadConf(env string) (Config, error) {
 
 	v := viper.New()
 	v.SetConfigName(confFileName)
-	v.AddConfigPath("./")
+	v.AddConfigPath("../")
 	if err := v.ReadInConfig(); err != nil {
 		return Config{}, err
 	}

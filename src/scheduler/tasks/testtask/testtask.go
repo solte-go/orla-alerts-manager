@@ -2,7 +2,6 @@ package testtask
 
 import (
 	"context"
-	"fmt"
 	"rabbitmq/lab-soltegm.com/src/config"
 	"rabbitmq/lab-soltegm.com/src/model"
 	v1 "rabbitmq/lab-soltegm.com/src/queue/rabbitmq/v1"
@@ -19,34 +18,38 @@ func init() {
 	_ = scheduler.Add(taskName, newTestTask)
 }
 
+type Publisher interface {
+	PrepareAndPublishMessage(ctx context.Context, routingKey string, entry model.Alert) error
+	DefaultRouting() string
+}
+
 type testTask struct {
-	logger   *zap.Logger
-	rabbitmq *v1.QueueConnector
+	logger    *zap.Logger
+	publisher Publisher
 }
 
 func newTestTask(t time.Duration, db *db.DB, conf *config.Tasks) (scheduler.Runnable, error) {
 	logger := zap.L().Named(taskName)
 
-	connection, err := v1.GetConnection(conf.ExampleTask.RabbitConnectionName)
+	rbInstance, err := v1.GetConnection(conf.ExampleTask.RabbitConnectionName)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("here", conf)
+
 	return &testTask{
-		rabbitmq: connection,
-		logger:   logger,
+		publisher: rbInstance,
+		logger:    logger,
 	}, nil
 }
 
 func (ts *testTask) Run() error {
 	ts.logger.Debug("Starting task: test_task")
 
-	entry := model.GetTestAlert()
-
 	time.Sleep(5 * time.Second)
 
-	for i := 0; i < 100; i++ {
-		err := ts.rabbitmq.PrepareAndPublishMessage(context.TODO(), v1.Default, entry)
+	for i := 0; i < 1200; i++ {
+		entry := model.GetTestAlert()
+		err := ts.publisher.PrepareAndPublishMessage(context.TODO(), ts.publisher.DefaultRouting(), entry)
 		if err != nil {
 			ts.logger.Error("error", zap.Error(err))
 		}

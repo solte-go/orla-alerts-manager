@@ -22,7 +22,7 @@ func InitDatabase(ctx context.Context, conf config.Config, logger *zap.Logger) (
 	}
 
 	instance := &DB{
-		SharedDB: sharedcollection.NewSharedCollection(db.Collection(conf.MongoDB.IndicesCollection), logger),
+		SharedDB: sharedcollection.NewSharedCollection(db.Collection(conf.MongoDB.Collection), logger),
 	}
 
 	return instance, nil

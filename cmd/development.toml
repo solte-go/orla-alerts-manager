@@ -35,7 +35,6 @@
 
 [worker]
     bunch_size = 1000
-    max_active_request = 100
     task_timeout = "10m"
     ticker_interval = "1s"
     connection_name = "Orla Worker"
@@ -52,7 +51,7 @@
     max_pool_size = 20
     connect_timeout = "30s"
     database_name = "development"
-    indexes_collection = "Shared"
+    collection = "Shared"
 
 
 [scheduler]

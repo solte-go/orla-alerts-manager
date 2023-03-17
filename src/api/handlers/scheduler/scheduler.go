@@ -24,6 +24,9 @@ type RequestParams struct {
 
 func (h *SchedulerHandler) Register(s *api.Server) (string, chi.Router) {
 	routes := chi.NewRouter()
+	routes.Use(s.SetRequestID)
+	routes.Use(s.LogRequest)
+    
 	routes.Get("/tasks", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
 		tasksInfo := h.Scheduler.TasksListInfo()

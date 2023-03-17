@@ -42,7 +42,7 @@ func InitConfig() Config {
 
 	mainQueue := &RabbitMQ{
 		ConnName:     "Tasks_Test_Connection",
-		AmqpURI:      "amqp://soltelab:labpass@localhost:5672/",
+		AmqpURI:      "amqp://rabbitdev:supra**@localhost:5672/",
 		Queue:        "defoult-queue",
 		Consumer:     "defoult-consumer",
 		Exchange:     "main-exchange",
@@ -58,7 +58,7 @@ func InitConfig() Config {
 
 	delayedQueue := &RabbitMQ{
 		ConnName:     "Tasks_Test_Delayed_Connection",
-		AmqpURI:      "amqp://soltelab:labpass@localhost:5672/",
+		AmqpURI:      "amqp://rabbitdev:supra**@localhost:5672/",
 		Queue:        "delayed-queue",
 		Consumer:     "defoult-consumer",
 		Exchange:     "delayed-exchange",
@@ -77,11 +77,11 @@ func InitConfig() Config {
 	}
 
 	mongo := &MongoDB{
-		DatabaseURL:       "mongodb://dbtest:supra**@localhost:27017/?authSource=admin",
-		MaxPoolSize:       20,
-		ConnectTimeout:    30 * time.Second,
-		DatabaseName:      "developmet_db",
-		IndicesCollection: "shared_collection",
+		DatabaseURL:    "mongodb://dbtest:supra**@localhost:27017/?authSource=admin",
+		MaxPoolSize:    20,
+		ConnectTimeout: 30 * time.Second,
+		DatabaseName:   "developmet_db",
+		Collection:     "shared_collection",
 	}
 
 	indices := make(map[string]string)

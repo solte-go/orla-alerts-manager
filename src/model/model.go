@@ -1,22 +1,10 @@
 package model
 
-import (
-	"crypto/sha256"
-	"encoding/hex"
-	"fmt"
-)
-
 type Alert struct {
-	HashID   string   `json:"hash_id" bson:"_id"`
+	// ID       string   `json:"hash_id" bson:"_id"`
 	Info     Info     `json,bson:"info"`
 	Revision Revision `json,bson:"revision"`
 	Event    Event    `json,bson:"event"`
-}
-
-func (a *Alert) CreateHashID() {
-	hash := sha256.New()
-	_, _ = fmt.Fprint(hash, a.Info.ID, a.Revision.Version, a.Event.TimeOfEvent)
-	a.HashID = hex.EncodeToString(hash.Sum(nil))
 }
 
 type Info struct {
@@ -35,8 +23,10 @@ type Revision struct {
 }
 
 type Event struct {
-	Severity    string `json,bson:"severity"`
-	TimeOfEvent int64  `json,bson:"time_of_event"`
-	Message     string `json,bson:"message"`
-	Log         string `json,bson:"log"`
+	Severity       string `json,bson:"severity"`
+	ReceivedAt     int64  `json,bson:"time_of_event"`
+	AcknowledgedAt int64  `json,bson:"acknowledged"`
+	ClosedAt       int64  `json,bson:"closed_at"`
+	Message        string `json,bson:"message"`
+	Log            string `json,bson:"log"`
 }

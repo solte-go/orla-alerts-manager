@@ -1,105 +1,137 @@
 package v1
 
 import (
-	"rabbitmq/lab-soltegm.com/src/config"
-	"rabbitmq/lab-soltegm.com/src/logging"
-	"rabbitmq/lab-soltegm.com/src/model"
+    "go.uber.org/zap"
+    "rabbitmq/lab-soltegm.com/src/config"
+    "rabbitmq/lab-soltegm.com/src/logging"
+    "rabbitmq/lab-soltegm.com/src/model"
+    "time"
 
-	"context"
-	"fmt"
-	"testing"
+    "context"
+    "fmt"
+    "testing"
 
-	"github.com/stretchr/testify/suite"
+    "github.com/stretchr/testify/suite"
 )
 
 // TODO Check it tomorrow
 type queueTests struct {
-	suite.Suite
-	rabbit *QueueConnector
-	conf   *config.RabbitMQ
+    suite.Suite
+    rabbit *QueueConnector
+    logger *zap.Logger
+    conf   *config.Config
 }
 
-func (suite *queueTests) Test_QueueFunctional() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+func (suite *queueTests) publishTestMessages(conn *QueueConnector) error {
+    for i := 0; i < 2; i++ {
+        entry := model.GetTestAlert()
 
-	err := suite.rabbit.StartPublisher()
-	suite.Suite.NoError(err)
-
-	alert := model.GetTestAlert()
-
-	err = suite.rabbit.PrepareAndPublishMessage(ctx, Default, alert)
-	suite.Suite.NoError(err)
-
-	//ch := make(chan model.NRDQueue)
-	//suite.rabbit.workerPipeline = ch
-	//suite.rabbit.StartConsumer(ch)
-	//
-	//data := <-ch
-	//fmt.Println(data)
-
-	//_, err = suite.rabbit.Connection.channel.QueuePurge(suite.conf.Queue, false)
-	//suite.Suite.NoError(err)
-}
-
-func (suite *queueTests) Test_ConsumerReconnection() {
-	ch := make(chan model.Alert)
-	err := suite.rabbit.StartConsumer(ch)
-	suite.Suite.NoError(err)
-
-	err = suite.rabbit.ReconnectConsumer()
-	suite.Suite.NoError(err)
-
-	newConnection := suite.rabbit.Connection.client.ConnectionState()
-	suite.Equal(false, newConnection.DidResume)
+        err := conn.PrepareAndPublishMessage(context.TODO(), conn.DefaultRouting(), entry)
+        if err != nil {
+            return err
+        }
+    }
+    return nil
 }
 
 func (suite *queueTests) Test_PublisherReconnection() {
-	err := suite.rabbit.StartPublisher()
-	suite.Suite.NoError(err)
+    testPublisher, err := GetConnection(suite.conf.RabbitQueues.MainQueue.ConnName)
+    suite.Suite.NoError(err)
+    errCh := make(chan error)
 
-	err = suite.rabbit.ReconnectPublisher()
-	suite.Suite.NoError(err)
+    err = testPublisher.StartPublisher(errCh)
+    suite.Suite.NoError(err)
 
-	newConnection := suite.rabbit.Connection.client.ConnectionState()
-	suite.Equal(false, newConnection.DidResume)
+    err = suite.publishTestMessages(testPublisher)
+    suite.Suite.NoError(err)
+
+    testPublisher.CloseConnection()
+
+    err = suite.publishTestMessages(testPublisher)
+    suite.Suite.NoError(err)
 }
 
-func (suite *queueTests) SetupTest() {
-	conf := config.InitConfig()
+func (suite *queueTests) Test_ConsumerReconnection() {
+    var data []model.Alert
+    errCh := make(chan error)
 
-	logger, err := logging.NewLogger(conf.Logging)
-	if err != nil {
-		panic(fmt.Sprintf("Can't initialize logger: %s", err.Error()))
-	}
+    testPublisher, err := GetConnection(suite.conf.RabbitQueues.MainQueue.ConnName)
+    suite.Suite.NoError(err)
 
-	err = InitiateConfiguration(
-		[]*config.RabbitMQ{
-			conf.RabbitQueues.MainQueue,
-		},
-		logger, false,
-	)
-	suite.Suite.NoError(err)
+    err = testPublisher.StartPublisher(errCh)
+    suite.Suite.NoError(err)
 
-	conn, err := GetConnection(conf.RabbitQueues.MainQueue.ConnName)
-	suite.Suite.NoError(err)
+    err = suite.publishTestMessages(testPublisher)
+    suite.Suite.NoError(err)
 
-	suite.rabbit = conn
-	suite.conf = conf.RabbitQueues.MainQueue
+    ch := make(chan model.Alert)
+    chErr := make(chan error)
+
+    testConsumer, err := GetConnection("test_consumer")
+    suite.Suite.NoError(err)
+
+    err = testConsumer.StartConsumer(ch, chErr)
+    suite.Suite.NoError(err)
+
+    msg := <-ch
+    data = append(data, msg)
+    suite.logger.Debug("data received", zap.String(msg.Info.Brand, msg.Event.Severity))
+    suite.Equal("Orla", msg.Info.Brand)
+
+    err = testConsumer.AckProcessedMessages()
+    suite.Suite.NoError(err)
+
+    testPublisher.CloseConnection()
+
+    time.Sleep(1 * time.Second)
+
+    err = testConsumer.RequeueNotAcknowledgedMessages()
+    suite.Suite.NoError(err)
+
+    msg = <-ch
+    data = append(data, msg)
+    suite.logger.Debug("data received", zap.String(msg.Info.Brand, msg.Event.Severity))
+    suite.Equal(2, len(data))
 }
 
-//func (suite *queueTests) TearDownTest() {
-//	//_, err := suite.rabbit.Connection.channel.QueuePurge(suite.conf.Queue, false)
-//	//suite.Suite.NoError(err)
-//}
+func (suite *queueTests) SetupSuite() {
+    conf := config.InitConfig()
+    suite.conf = &conf
+
+    logger, err := logging.NewLogger(conf.Logging)
+    if err != nil {
+        panic(fmt.Sprintf("Can't initialize logger: %s", err.Error()))
+    }
+    suite.logger = logger
+
+    err = InitiateConfiguration(
+        []*config.RabbitMQ{conf.RabbitQueues.MainQueue}, logger, false)
+    suite.Suite.NoError(err)
+
+    err = InitiateConfiguration(
+        []*config.RabbitMQ{conf.RabbitQueues.DelayedQueue}, logger, true)
+    suite.Suite.NoError(err)
+
+    _, err = NewConnection(
+        "test_consumer",
+        []string{conf.RabbitQueues.MainQueue.Queue, conf.RabbitQueues.DelayedQueue.Queue},
+        conf.RabbitQueues.MainQueue,
+        logger,
+    )
+
+    if err != nil {
+        logger.Fatal("Can't connect to RabbitMQ", zap.Error(err))
+    }
+}
 
 func (suite *queueTests) TearDownSuite() {
-	_, err := suite.rabbit.Connection.channel.QueuePurge(suite.conf.Queue, false)
-	suite.Suite.NoError(err)
+    conn, err := GetConnection(suite.conf.RabbitQueues.MainQueue.ConnName)
+    suite.Suite.NoError(err)
 
-	suite.rabbit.Shutdown()
+    conn.Connection.channel.QueueDelete(suite.conf.RabbitQueues.MainQueue.Queue, false, false, true)
+    conn.Connection.channel.QueueDelete(suite.conf.RabbitQueues.DelayedQueue.Queue, false, false, true)
 }
 
 func TestPublisher(t *testing.T) {
-	suite.Run(t, &queueTests{})
+    suite.Run(t, &queueTests{})
 }

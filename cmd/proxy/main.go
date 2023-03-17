@@ -31,22 +31,29 @@ func init() {
 	flag.Parse()
 }
 
-func waitQuitSignal() {
-	quit := make(chan os.Signal, 1)
-	defer close(quit)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+func waitQuitSignal(ctx context.Context) context.Context {
+	ctx, cancel := context.WithCancel(ctx)
 
-	<-quit
+	go func() {
+		quit := make(chan os.Signal, 1)
+		defer close(quit)
+		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+		<-quit
+		cancel()
+	}()
+
+	return ctx
 }
 
 func main() {
+
+	ctx := waitQuitSignal(context.Background())
 
 	conf, err := config.LoadConf(env)
 	if err != nil {
 		panic(fmt.Sprintf("Error load config: %s", err.Error()))
 	}
-
-	fmt.Println(conf)
 
 	logger, err := logging.NewLogger(conf.Logging)
 	if err != nil {
@@ -59,11 +66,6 @@ func main() {
 	undo := zap.ReplaceGlobals(logger)
 	defer undo()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// conf.RabbitQueues.MainQueue.ConnName = "Sources Proxy Default"
-
 	err = v1.InitiateConfiguration(
 		[]*config.RabbitMQ{
 			conf.RabbitQueues.MainQueue,
@@ -74,14 +76,9 @@ func main() {
 		logger.Fatal("Can't initialize RabbitMQ", zap.Error(err))
 	}
 
-	r, err := v1.GetConnection(conf.RabbitQueues.MainQueue.ConnName)
+	publisher, err := v1.GetConnection(conf.RabbitQueues.MainQueue.ConnName)
 	if err != nil {
 		logger.Fatal("Can't get RabbitMQ connection", zap.Error(err))
-	}
-
-	err = r.StartPublisher()
-	if err != nil {
-		logger.Fatal("Can't start RabbitMQ Publisher", zap.Error(err))
 	}
 
 	newStore, err := db.InitDatabase(ctx, conf, logger)
@@ -92,7 +89,14 @@ func main() {
 	proxyMetrics := proxymetrics.NewSourcesProxy()
 
 	sch := scheduler.New()
-	go sch.Run(ctx, 2*time.Second, conf.Scheduler.Jitter)
+
+	server := api.NewServer(logger)
+	go server.Run(
+		ctx,
+		conf.Server.Port,
+		proxyMetrics,
+		&schedulerHandler.SchedulerHandler{Scheduler: &sch},
+	)
 
 	for _, taskDesc := range conf.Scheduler.Tasks {
 		logger.Info(taskDesc[0])
@@ -126,13 +130,5 @@ func main() {
 		sch.AddScheduled(taskName, startTime, duration, task)
 	}
 
-	server := api.NewServer(logger)
-	go server.Run(
-		ctx,
-		conf.Server.Port,
-		proxyMetrics,
-		&schedulerHandler.SchedulerHandler{Scheduler: &sch},
-	)
-
-	waitQuitSignal()
+    sch.Run(ctx, 2*time.Second, publisher)
 }

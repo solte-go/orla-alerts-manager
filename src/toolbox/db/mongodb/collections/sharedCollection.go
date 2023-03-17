@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"rabbitmq/lab-soltegm.com/src/model"
-	"rabbitmq/lab-soltegm.com/src/toolbox/db/contract"
 
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
@@ -20,7 +19,7 @@ type SharedCollection struct {
 }
 
 // NewSharedCollection Creates new instance of RequestsCollection.
-func NewSharedCollection(collection *mongo.Collection, logger *zap.Logger) contract.SharedCollectionContract {
+func NewSharedCollection(collection *mongo.Collection, logger *zap.Logger) *SharedCollection {
 	return &SharedCollection{
 		logger:     logger,
 		collection: collection,
@@ -38,7 +37,6 @@ func (sh *SharedCollection) NewAlert(ctx context.Context, data []*model.Alert) e
 	}
 
 	for _, d := range data {
-		d.CreateHashID()
 		operation := mongo.NewInsertOneModel()
 		operation.SetDocument(d)
 		operations = append(operations, operation)
@@ -53,23 +51,6 @@ func (sh *SharedCollection) NewAlert(ctx context.Context, data []*model.Alert) e
 	}
 
 	sh.logger.Debug(fmt.Sprintf("Documents inserted: %v, modifided: %v", result.UpsertedCount, result.ModifiedCount))
-	return nil
-}
-
-func (sh *SharedCollection) ClearDatabase(ctx context.Context) error {
-	err := sh.collection.Drop(ctx)
-	if err != nil {
-		return errors.Wrap(err, "couldn't delete document")
-	}
-	return nil
-}
-
-// DropDataBase this func not included to RequestsCollectionContract. Execution will drop hole database.
-// Only used in a test and cast to an interface within a performing test.
-func (rc *SharedCollection) DropDatabase(ctx context.Context) error {
-	if err := rc.collection.Database().Drop(ctx); err != nil {
-		return fmt.Errorf("couldn't drop collection: %w", err)
-	}
 	return nil
 }
 
@@ -88,6 +69,23 @@ func (sh *SharedCollection) GetAllAlerts(ctx context.Context) ([]*model.Alert, e
 		}
 	}
 	return result, nil
+}
+
+func (sh *SharedCollection) ClearDatabase(ctx context.Context) error {
+	err := sh.collection.Drop(ctx)
+	if err != nil {
+		return errors.Wrap(err, "couldn't delete document")
+	}
+	return nil
+}
+
+// DropDataBase this func not included to RequestsCollectionContract. Execution will drop hole database.
+// Only used in a test and cast to an interface within a performing test.
+func (rc *SharedCollection) DropDatabase(ctx context.Context) error {
+	if err := rc.collection.Database().Drop(ctx); err != nil {
+		return fmt.Errorf("couldn't drop collection: %w", err)
+	}
+	return nil
 }
 
 // // EnrichWithDRSData Enriching Record with DRS service data.

@@ -6,9 +6,11 @@ import (
 )
 
 func GetTestAlert() Alert {
+	//rand.Seed(time.Now().UnixNano())
 
-	idMin := int64(800)
-	idMax := int64(2147483645)
+	rand.NewSource(time.Now().UnixNano())
+	idMin := int64(100000000000)
+	idMax := int64(999999999999)
 
 	id := rand.Int63n(idMax-idMin) + idMin
 
@@ -21,17 +23,15 @@ func GetTestAlert() Alert {
 		},
 		Revision: Revision{
 			Version:   "1.2",
-			CreatedAt: int64(time.Now().AddDate(-1, 0, -12).Unix()),
-			UpdateAt:  int64(time.Now().AddDate(0, -4, -5).Unix()),
+			CreatedAt: time.Now().AddDate(-1, 0, -12).Unix(),
+			UpdateAt:  time.Now().AddDate(0, -4, -5).Unix(),
 		},
 		Event: Event{
-			Severity:    "Critical",
-			TimeOfEvent: time.Now().Unix(),
-			Message:     "Slot 1 critical error",
-			Log:         "Some big and complicated log",
+			Severity:   "Critical",
+			ReceivedAt: time.Now().Unix(),
+			Message:    "Slot 1 critical error",
+			Log:        "Some big and complicated log",
 		},
 	}
-
-	alert.CreateHashID()
 	return alert
 }

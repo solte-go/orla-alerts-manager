@@ -6,14 +6,14 @@ import (
 )
 
 type SharedCollectionContract interface {
-	// AddDataToCollection will add data to collection with provided request "id".
-	//The "id" automatically will be converted to collection name.
+	// NewAlert will add data to collection.
+	//The "id" automatically will be generated.
 	NewAlert(ctx context.Context, domains []*model.Alert) error
 	// GetAllAlerts Retrieve all alerts from the collection.
 	GetAllAlerts(ctx context.Context) ([]*model.Alert, error)
 }
 
 type TeardownDB interface {
-	DropDataBase(ctx context.Context) error
+	DropDatabase(ctx context.Context) error
 	ClearDatabase(ctx context.Context) error
 }
