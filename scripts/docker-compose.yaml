@@ -20,8 +20,8 @@ services:
       retries: 5
       start_period: 30s
     environment:
-      - RABBITMQ_DEFAULT_USER=rabbitdev
-      - RABBITMQ_DEFAULT_PASS=supra**
+      - RABBITMQ_DEFAULT_USER=$RABBIT_USER
+      - RABBITMQ_DEFAULT_PASS=$RABBIT_PASS
 
   prometheus:
     image: "prom/prometheus"
@@ -48,8 +48,8 @@ services:
         max_attempts: 3
         window: 120s
     environment:
-      MONGO_INITDB_ROOT_USERNAME: dbtest
-      MONGO_INITDB_ROOT_PASSWORD: supra**
+      MONGO_INITDB_ROOT_USERNAME: $MONGO_USERNAME
+      MONGO_INITDB_ROOT_PASSWORD: $MONGO_PASS
     ports:
       - "27017:27017"
     expose:
@@ -58,6 +58,7 @@ services:
       - mongodb-volume:/data/db
     networks:
       - dev-network
+
   # elasticsearch:
   #   image: docker.elastic.co/elasticsearch/elasticsearch:7.16.3
   #   container_name: elasticsearch

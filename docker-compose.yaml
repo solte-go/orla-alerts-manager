@@ -65,9 +65,6 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
-    environment:
-      - RABBITMQ_DEFAULT_USER=
-      - RABBITMQ_DEFAULT_PASS=
 
   orla-mongodb:
     container_name: orla-mongodb
@@ -84,9 +81,6 @@ services:
         timeout: 10s
         retries: 5
         start_period: 30s
-    environment:
-      MONGO_INITDB_ROOT_USERNAME:
-      MONGO_INITDB_ROOT_PASSWORD:
     ports:
       - "27017:27017"
     expose:

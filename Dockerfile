@@ -13,22 +13,21 @@ COPY --link vendor vendor
 ARG CGO_ENABLED=0
 ARG GOOS=linux
 
-ARG CMDPATH=soltelab/rabbitmq/cmd
-
 RUN  --mount=type=cache,target=/root/.cache \
-    go build -tags musl -o ./bin/proxy -ldflags "-X main.version=0.1.0" $CMDPATH/proxy; 
+    go build -tags musl -o cmd/proxy -ldflags "-X main.version=$VERSION" ../proxy;
 
 
+# BASE-CONTAINER builder
 FROM alpine:3.16 as base-container
 COPY --link --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --link --from=builder /build/cmd/production.toml /app/cmd/production.toml
+COPY --link --from=builder /build/cmd/production.toml /opt/worker/production.toml
 
 # PROXY builder
 FROM base-container as proxy
 WORKDIR /app
-COPY --link --from=builder /build/bin/proxy /app/cmd/proxy
+COPY --link --from=builder /build/cmd/proxy /opt/worker/
 
-EXPOSE 5005
+EXPOSE 8080
 
-WORKDIR /app/cmd
+WORKDIR /opt/worker
 ENTRYPOINT ["./proxy", "-env", "prod"]
