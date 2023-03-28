@@ -1,5 +1,7 @@
 package model
 
+import "encoding/json"
+
 type Alert struct {
 	// ID       string   `json:"hash_id" bson:"_id"`
 	Info     Info     `json,bson:"info"`
@@ -9,6 +11,7 @@ type Alert struct {
 
 type Info struct {
 	ID           uint64 `json,bson:"id"`
+	Name         string `json,bson:"name"`
 	Brand        string `json,bson:"brand"`
 	Type         string `json,bson:"type"`
 	Model        string `json,bson:"model"`
@@ -29,4 +32,9 @@ type Event struct {
 	ClosedAt       int64  `json,bson:"closed_at"`
 	Message        string `json,bson:"message"`
 	Log            string `json,bson:"log"`
+}
+
+func (a *Alert) ToJSON() []byte {
+	res, _ := json.Marshal(a)
+	return res
 }

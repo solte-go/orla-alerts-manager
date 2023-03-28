@@ -1,4 +1,7 @@
 [tasks.example_task]
-    rabbitConnectionName = "orla-alerts-proxy"
+    rabbit_connection_name = "orla_alerts_proxy"
+
+[tasks.kafka_example_task]
+    kafka_connectoin_name = "orla_alerts_proxy"
 
 

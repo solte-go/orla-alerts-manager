@@ -16,8 +16,9 @@ import (
 type Config struct {
 	Environment   string
 	ElasticSearch *ElasticSearch `mapstructure:"elastic"`
-	Server        *HTTPserver    `mapstructure:"http_server"`
+	Server        *HTTPServer    `mapstructure:"http_server"`
 	OraAPI        *OraAPI        `mapstructure:"ora_api"`
+	Kafka         *Kafka         `mapstructure:"v1"`
 	Logging       *Logging       `mapstructure:"logging"`
 	MongoDB       *MongoDB       `mapstructure:"mongo"`
 	RabbitQueues  *RabbitQueues  `mapstructure:"rabbit_queues"`
@@ -27,10 +28,11 @@ type Config struct {
 }
 
 type Tasks struct {
-	ExampleTask `mapstructure:"example_task"`
+	ExampleTask      `mapstructure:"example_task"`
+	KafkaExampleTask `mapstructure:"kafka_example_task"`
 }
 
-type HTTPserver struct {
+type HTTPServer struct {
 	Port int `mapstructure:"apiPort"`
 }
 
@@ -42,6 +44,15 @@ type Scheduler struct {
 type RabbitQueues struct {
 	MainQueue    *RabbitMQ `mapstructure:"main_queue"`
 	DelayedQueue *RabbitMQ `mapstructure:"delayed_queue"`
+}
+
+type Kafka struct {
+	ConnectionName string        `mapstructure:"connection_name"`
+	Brokers        string        `mapstructure:"brokers"`
+	Topic          string        `mapstructure:"topic"`
+	TimeOut        time.Duration `mapstructure:"timeout"`
+	Partitions     int           `mapstructure:"partitions"`
+	PushTimeout    time.Duration `mapstructure:"push_timeout"`
 }
 
 type RabbitMQ struct {

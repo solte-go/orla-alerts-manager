@@ -1,6 +1,14 @@
 [http_server]
     apiPort = 8080
 
+[kafka]
+    brokers = "localhost:9092"
+    topic = "new_events"
+    timeout = "15s"
+    partitions = 1
+    push_timeout = "1s"
+
+
 [rabbit_queues.main_queue]
     conn_name = "orla-alerts-proxy"
     uri = ""
