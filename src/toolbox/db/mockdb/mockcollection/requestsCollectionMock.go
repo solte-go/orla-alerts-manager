@@ -2,8 +2,8 @@ package requestscollection
 
 import (
 	"context"
-	"rabbitmq/lab-soltegm.com/src/model"
-	"rabbitmq/lab-soltegm.com/src/toolbox/db/contract"
+	"orla-alert/solte.lab/src/model"
+	"orla-alert/solte.lab/src/toolbox/db/contract"
 )
 
 type RequestCollectionMock struct {

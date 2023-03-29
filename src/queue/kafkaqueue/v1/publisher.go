@@ -1,17 +1,20 @@
-package v1
+package kafkaQueueV1
 
 import (
 	"context"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
-	"go.uber.org/zap"
-	"rabbitmq/lab-soltegm.com/src/config"
+	"orla-alert/solte.lab/src/config"
+
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
+
 	"time"
+
+	"go.uber.org/zap"
 )
 
 var connectionPool = make(map[string]*Publisher)
 
 type Publisher struct {
-	conf     config.Kafka
+	conf     *config.Kafka
 	producer *kafka.Producer
 	logger   *zap.Logger
 }
@@ -34,7 +37,7 @@ func GetKafkaPublisher(connName string) (*Publisher, error) {
 	return nil, ErrNoConnectionWithProvidedName
 }
 
-func NewKafkaPublisher(conf config.Kafka) (*Publisher, error) {
+func NewKafkaPublisher(conf *config.Kafka) (*Publisher, error) {
 	var (
 		producer        *kafka.Producer
 		err             error

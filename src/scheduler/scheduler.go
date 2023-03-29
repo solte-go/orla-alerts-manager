@@ -3,13 +3,14 @@ package scheduler
 import (
 	"context"
 	"fmt"
-	"go.uber.org/zap"
 	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
 
-	v1 "rabbitmq/lab-soltegm.com/src/queue/rabbitmq/v1"
+	"go.uber.org/zap"
+
+	v1 "orla-alert/solte.lab/src/queue/rabbitmq/v1"
 )
 
 type Scheduler struct {

@@ -1,4 +1,4 @@
-package v1
+package kafkaQueueV1
 
 import (
 	"github.com/pkg/errors"

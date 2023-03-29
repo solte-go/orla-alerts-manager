@@ -1,7 +1,7 @@
 package proxymetrics
 
 import (
-	"rabbitmq/lab-soltegm.com/src/api"
+	"orla-alert/solte.lab/src/api"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus"

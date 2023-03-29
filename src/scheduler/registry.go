@@ -2,8 +2,8 @@ package scheduler
 
 import (
 	"fmt"
-	"rabbitmq/lab-soltegm.com/src/config"
-	"rabbitmq/lab-soltegm.com/src/toolbox/db"
+	"orla-alert/solte.lab/src/config"
+	"orla-alert/solte.lab/src/toolbox/db"
 	"time"
 )
 

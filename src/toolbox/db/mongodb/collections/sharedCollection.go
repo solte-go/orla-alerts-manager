@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"rabbitmq/lab-soltegm.com/src/model"
+	"orla-alert/solte.lab/src/model"
 
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"

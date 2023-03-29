@@ -4,8 +4,8 @@ import (
 	"os"
 	"time"
 
-	"rabbitmq/lab-soltegm.com/src/config"
-	"rabbitmq/lab-soltegm.com/src/logging/gelf"
+	"orla-alert/solte.lab/src/config"
+	"orla-alert/solte.lab/src/logging/gelf"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"

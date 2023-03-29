@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
@@ -38,8 +39,10 @@ func (s *Server) Run(ctx context.Context, port int, handlers ...Handler) {
 
 	s.logger.Debug(fmt.Sprintf("Server running on port %d", port))
 	srv := http.Server{
-		Addr:    fmt.Sprintf(":%d", port),
-		Handler: s.router,
+		Addr:         fmt.Sprintf(":%d", port),
+		Handler:      s.router,
+		WriteTimeout: 60 * time.Second,
+		ReadTimeout:  15 * time.Second,
 	}
 
 	go func() {

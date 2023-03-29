@@ -4,22 +4,23 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"orla-alert/solte.lab/src/api"
+	"orla-alert/solte.lab/src/api/handlers/metrics/proxymetrics"
+	schedulerHandler "orla-alert/solte.lab/src/api/handlers/scheduler"
+	"orla-alert/solte.lab/src/config"
+	"orla-alert/solte.lab/src/logging"
+	rabbitv1 "orla-alert/solte.lab/src/queue/rabbitmq/v1"
+	"orla-alert/solte.lab/src/scheduler"
+	"orla-alert/solte.lab/src/toolbox/db"
 	"os"
 	"os/signal"
-	"rabbitmq/lab-soltegm.com/src/api"
-	"rabbitmq/lab-soltegm.com/src/api/handlers/metrics/proxymetrics"
-	schedulerHandler "rabbitmq/lab-soltegm.com/src/api/handlers/scheduler"
-	"rabbitmq/lab-soltegm.com/src/config"
-	"rabbitmq/lab-soltegm.com/src/logging"
-	v1 "rabbitmq/lab-soltegm.com/src/queue/rabbitmq/v1"
-	"rabbitmq/lab-soltegm.com/src/scheduler"
-	"rabbitmq/lab-soltegm.com/src/toolbox/db"
 	"syscall"
 	"time"
 
 	"go.uber.org/zap"
 
-	_ "rabbitmq/lab-soltegm.com/src/scheduler/tasks/testtask"
+	_ "orla-alert/solte.lab/src/scheduler/tasks/kafkaqueue"
+	_ "orla-alert/solte.lab/src/scheduler/tasks/testtask"
 )
 
 var (
@@ -66,7 +67,7 @@ func main() {
 	undo := zap.ReplaceGlobals(logger)
 	defer undo()
 
-	err = v1.InitiateConfiguration(
+	err = rabbitv1.InitiateConfiguration(
 		[]*config.RabbitMQ{
 			conf.RabbitQueues.MainQueue,
 		},
@@ -76,7 +77,7 @@ func main() {
 		logger.Fatal("Can't initialize RabbitMQ", zap.Error(err))
 	}
 
-	publisher, err := v1.GetConnection(conf.RabbitQueues.MainQueue.ConnName)
+	publisher, err := rabbitv1.GetConnection(conf.RabbitQueues.MainQueue.ConnName)
 	if err != nil {
 		logger.Fatal("Can't get RabbitMQ connection", zap.Error(err))
 	}
@@ -130,5 +131,5 @@ func main() {
 		sch.AddScheduled(taskName, startTime, duration, task)
 	}
 
-    sch.Run(ctx, 2*time.Second, publisher)
+	sch.Run(ctx, 2*time.Second, publisher)
 }

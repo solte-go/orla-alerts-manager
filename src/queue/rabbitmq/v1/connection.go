@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
-	"rabbitmq/lab-soltegm.com/src/config"
-	"rabbitmq/lab-soltegm.com/src/model"
+	"orla-alert/solte.lab/src/config"
+	"orla-alert/solte.lab/src/model"
 	"time"
 
 	"github.com/pkg/errors"

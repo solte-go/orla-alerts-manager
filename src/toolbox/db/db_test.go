@@ -3,13 +3,13 @@ package db
 import (
 	"context"
 	"fmt"
-	"rabbitmq/lab-soltegm.com/src/logging"
-	"rabbitmq/lab-soltegm.com/src/model"
-	"rabbitmq/lab-soltegm.com/src/toolbox/db/contract"
+	"orla-alert/solte.lab/src/logging"
+	"orla-alert/solte.lab/src/model"
+	"orla-alert/solte.lab/src/toolbox/db/contract"
 	"testing"
 	"time"
 
-	"rabbitmq/lab-soltegm.com/src/config"
+	"orla-alert/solte.lab/src/config"
 
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"

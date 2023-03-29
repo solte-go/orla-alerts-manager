@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"rabbitmq/lab-soltegm.com/src/model"
+	"orla-alert/solte.lab/src/model"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
