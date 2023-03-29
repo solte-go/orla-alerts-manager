@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 type ctxKey int8
@@ -35,16 +36,22 @@ func (s *Server) Run(ctx context.Context, port int, handlers ...Handler) {
 		s.router.Mount(path, router)
 	}
 
-	//TODO graceful shutdown
+	s.logger.Debug(fmt.Sprintf("Server running on port %d", port))
+	srv := http.Server{
+		Addr:    fmt.Sprintf(":%d", port),
+		Handler: s.router,
+	}
+
 	go func() {
+		// graceful shutdown
 		<-ctx.Done()
 		s.logger.Warn("server shutdown")
+		srv.Shutdown(context.Background())
 	}()
 
-	s.logger.Debug(fmt.Sprintf("Server running on port %d", port))
-	err := http.ListenAndServe(fmt.Sprintf(":%d", port), s.router)
+	err := srv.ListenAndServe()
 	if err != nil {
-		panic(err)
+		s.logger.Error("server error", zap.Error(err))
 	}
 }
 
