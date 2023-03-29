@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"rabbitmq/lab-soltegm.com/src/model"
+	"orla-alerts/solte.lab/src/model"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"

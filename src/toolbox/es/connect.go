@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
-	"rabbitmq/lab-soltegm.com/src/config"
+	"orla-alerts/solte.lab/src/config"
 	"time"
 
 	"github.com/elastic/go-elasticsearch/v7"

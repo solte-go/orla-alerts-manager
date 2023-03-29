@@ -4,22 +4,22 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"orla-alerts/solte.lab/src/api"
+	"orla-alerts/solte.lab/src/api/handlers/metrics/proxymetrics"
+	schedulerHandler "orla-alerts/solte.lab/src/api/handlers/scheduler"
+	"orla-alerts/solte.lab/src/config"
+	"orla-alerts/solte.lab/src/logging"
+	v1 "orla-alerts/solte.lab/src/queue/rabbitmq/v1"
+	"orla-alerts/solte.lab/src/scheduler"
+	"orla-alerts/solte.lab/src/toolbox/db"
 	"os"
 	"os/signal"
-	"rabbitmq/lab-soltegm.com/src/api"
-	"rabbitmq/lab-soltegm.com/src/api/handlers/metrics/proxymetrics"
-	schedulerHandler "rabbitmq/lab-soltegm.com/src/api/handlers/scheduler"
-	"rabbitmq/lab-soltegm.com/src/config"
-	"rabbitmq/lab-soltegm.com/src/logging"
-	v1 "rabbitmq/lab-soltegm.com/src/queue/rabbitmq/v1"
-	"rabbitmq/lab-soltegm.com/src/scheduler"
-	"rabbitmq/lab-soltegm.com/src/toolbox/db"
 	"syscall"
 	"time"
 
 	"go.uber.org/zap"
 
-	_ "rabbitmq/lab-soltegm.com/src/scheduler/tasks/testtask"
+	_ "orla-alerts/solte.lab/src/scheduler/tasks/testtask"
 )
 
 var (
@@ -130,5 +130,5 @@ func main() {
 		sch.AddScheduled(taskName, startTime, duration, task)
 	}
 
-    sch.Run(ctx, 2*time.Second, publisher)
+	sch.Run(ctx, 2*time.Second, publisher)
 }

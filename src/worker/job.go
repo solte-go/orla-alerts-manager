@@ -1,7 +1,7 @@
 package worker
 
 import (
-	"rabbitmq/lab-soltegm.com/src/model"
+	"orla-alerts/solte.lab/src/model"
 	"time"
 )
 

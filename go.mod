@@ -1,4 +1,4 @@
-module rabbitmq/lab-soltegm.com
+module orla-alerts/solte.lab
 
 go 1.20
 

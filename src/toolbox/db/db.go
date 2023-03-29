@@ -3,10 +3,10 @@ package db
 import (
 	"context"
 
-	"rabbitmq/lab-soltegm.com/src/config"
-	"rabbitmq/lab-soltegm.com/src/toolbox/db/contract"
-	"rabbitmq/lab-soltegm.com/src/toolbox/db/mongodb"
-	sharedcollection "rabbitmq/lab-soltegm.com/src/toolbox/db/mongodb/collections"
+	"orla-alerts/solte.lab/src/config"
+	"orla-alerts/solte.lab/src/toolbox/db/contract"
+	"orla-alerts/solte.lab/src/toolbox/db/mongodb"
+	sharedcollection "orla-alerts/solte.lab/src/toolbox/db/mongodb/collections"
 
 	"go.uber.org/zap"
 )

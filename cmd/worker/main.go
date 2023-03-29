@@ -4,13 +4,13 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"orla-alerts/solte.lab/src/config"
+	"orla-alerts/solte.lab/src/logging"
+	v1 "orla-alerts/solte.lab/src/queue/rabbitmq/v1"
+	"orla-alerts/solte.lab/src/toolbox/db"
+	"orla-alerts/solte.lab/src/worker"
 	"os"
 	"os/signal"
-	"rabbitmq/lab-soltegm.com/src/config"
-	"rabbitmq/lab-soltegm.com/src/logging"
-	v1 "rabbitmq/lab-soltegm.com/src/queue/rabbitmq/v1"
-	"rabbitmq/lab-soltegm.com/src/toolbox/db"
-	"rabbitmq/lab-soltegm.com/src/worker"
 
 	"syscall"
 
@@ -30,7 +30,7 @@ func main() {
 	//go func() {
 	//	log.Fatal(http.ListenAndServe(":8099", nil))
 	//}()
-    
+
 	ctx := waitQuitSignal(context.Background())
 
 	conf, err := config.LoadConf(env)

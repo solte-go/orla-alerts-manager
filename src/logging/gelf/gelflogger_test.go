@@ -5,7 +5,7 @@ import (
 	"io"
 	"testing"
 
-	"rabbitmq/lab-soltegm.com/src/logging/gelf"
+	"orla-alerts/solte.lab/src/logging/gelf"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"

@@ -5,10 +5,10 @@ import (
 
 	"time"
 
-	"rabbitmq/lab-soltegm.com/src/config"
-	"rabbitmq/lab-soltegm.com/src/model"
-	v1 "rabbitmq/lab-soltegm.com/src/queue/rabbitmq/v1"
-	"rabbitmq/lab-soltegm.com/src/toolbox/db"
+	"orla-alerts/solte.lab/src/config"
+	"orla-alerts/solte.lab/src/model"
+	v1 "orla-alerts/solte.lab/src/queue/rabbitmq/v1"
+	"orla-alerts/solte.lab/src/toolbox/db"
 
 	"go.uber.org/zap"
 )

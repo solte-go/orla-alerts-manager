@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	v1 "rabbitmq/lab-soltegm.com/src/queue/rabbitmq/v1"
+	v1 "orla-alerts/solte.lab/src/queue/rabbitmq/v1"
 )
 
 type Scheduler struct {

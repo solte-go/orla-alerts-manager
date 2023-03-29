@@ -2,11 +2,11 @@ package testtask
 
 import (
 	"context"
-	"rabbitmq/lab-soltegm.com/src/config"
-	"rabbitmq/lab-soltegm.com/src/model"
-	v1 "rabbitmq/lab-soltegm.com/src/queue/rabbitmq/v1"
-	"rabbitmq/lab-soltegm.com/src/scheduler"
-	"rabbitmq/lab-soltegm.com/src/toolbox/db"
+	"orla-alerts/solte.lab/src/config"
+	"orla-alerts/solte.lab/src/model"
+	v1 "orla-alerts/solte.lab/src/queue/rabbitmq/v1"
+	"orla-alerts/solte.lab/src/scheduler"
+	"orla-alerts/solte.lab/src/toolbox/db"
 	"time"
 
 	"go.uber.org/zap"

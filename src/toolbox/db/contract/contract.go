@@ -2,7 +2,7 @@ package contract
 
 import (
 	"context"
-	"rabbitmq/lab-soltegm.com/src/model"
+	"orla-alerts/solte.lab/src/model"
 )
 
 type SharedCollectionContract interface {
