@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.4
-
+# BUILDER
 FROM golang:1.19-alpine3.16 AS builder
 RUN --mount=type=cache,target=/root/.cache \
     apk add --no-cache --update git
